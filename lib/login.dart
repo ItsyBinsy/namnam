@@ -122,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(height: 6),
 
             Text(
-              'Discover & review great food',
+              'Find it. Eat it. Nam it.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,

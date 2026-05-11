@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'search.dart';
 import 'profile.dart';
@@ -12,7 +13,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int currentIndex =0;
+  int currentIndex = 0;
   String selectedCategory = 'All';
 
   final List<String> categories = [
@@ -67,10 +68,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBody(BuildContext context) {
-    if (currentIndex ==0) return _buildHome(context);
+    if (currentIndex == 0) return _buildHome(context);
     if (currentIndex == 1) return SearchPage();
-    if (currentIndex ==2) return SavedPage();
-    if (currentIndex ==3) return ProfilePage();
+    if (currentIndex == 2) return SavedPage();
+    if (currentIndex == 3) return ProfilePage();
     return const Center(child: Text('Coming soon'));
   }
 
@@ -79,39 +80,85 @@ class _HomePageState extends State<HomePage> {
       children: [
         Container(
           color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(16,50,16,12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width:32,
-                    height:32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8950A),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.rice_bowl_rounded,
-                      color: Colors.white,
-                      size:18,
-                    ),
-                  ),
-                  const SizedBox(width:8),
-                  const Text(
-                    'NamNam',
-                    style: TextStyle(
-                      fontSize:20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1D1D1F),
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8950A),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.rice_bowl_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'NamNam',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1D1D1F),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const Icon(
-                Icons.notifications_outlined,
-                color: Color(0xFF1D1D1F),
+              const SizedBox(height: 16),
+              // Greeting section
+              StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(FirebaseAuth.instance.currentUser?.uid)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  String firstName = '';
+                  if (snapshot.hasData && snapshot.data!.exists) {
+                    var data = snapshot.data!.data() as Map<String, dynamic>;
+                    var fullName = (data['fullname'] ?? '').toString();
+                    firstName = fullName.split(' ').first;
+                  }
+
+                  var hour = DateTime.now().hour;
+                  var greeting = hour < 12
+                      ? 'Good morning'
+                      : hour < 18
+                      ? 'Good afternoon'
+                      : 'Good evening';
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$greeting, $firstName!',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1D1D1F),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Find it. Eat it. Nam it.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF6E6E73),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -121,52 +168,44 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.all(16),
             children: [
               SizedBox(
-                height:36,
+                height: 36,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: categories.length,
                   itemBuilder: (context, index) {
                     final category = categories[index];
                     final isSelected = selectedCategory == category;
-                    return TextButton(
-                      onPressed: () {
-                        setState(() {
-                          selectedCategory = category;
-                        });
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: isSelected ? const Color(0xFFE8950A)
-                            : Colors.white,
-                        foregroundColor: isSelected ? Colors.white : const Color(0xFF6E6E73),
-                        padding: const EdgeInsets.symmetric(horizontal:16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            selectedCategory = category;
+                          });
+                        },
+                        style: TextButton.styleFrom(
+                          backgroundColor: isSelected ? const Color(0xFFE8950A) : Colors.white,
+                          foregroundColor: isSelected ? Colors.white : const Color(0xFF6E6E73),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        category,
-                        style: const TextStyle(fontSize:13),
+                        child: Text(
+                          category,
+                          style: const TextStyle(fontSize: 13),
+                        ),
                       ),
                     );
                   },
                 ),
               ),
-              const SizedBox(height:20),
-              const Text(
-                'Near you',
-                style: TextStyle(
-                  fontSize:20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1D1D1F),
-                ),
-              ),
-              const SizedBox(height:12),
               StreamBuilder<QuerySnapshot>(
                 stream: selectedCategory == 'All'
                     ? FirebaseFirestore.instance.collection('tbl_restaurants').snapshots()
-                    : FirebaseFirestore.instance .collection('tbl_restaurants')
+                    : FirebaseFirestore.instance.collection('tbl_restaurants')
                     .where('category', isEqualTo: selectedCategory)
                     .snapshots(),
                 builder: (context, snapshot) {
@@ -201,7 +240,7 @@ class _HomePageState extends State<HomePage> {
                       final data = restaurant.data() as Map<String, dynamic>;
 
                       return Container(
-                        margin: const EdgeInsets.only(bottom:12),
+                        margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(14),
@@ -219,8 +258,8 @@ class _HomePageState extends State<HomePage> {
                             );
                           },
                           leading: Container(
-                            width:56,
-                            height:56,
+                            width: 56,
+                            height: 56,
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFF8EC),
                               borderRadius: BorderRadius.circular(10),
@@ -228,13 +267,13 @@ class _HomePageState extends State<HomePage> {
                             child: const Icon(
                               Icons.restaurant,
                               color: Color(0xFFE8950A),
-                              size:28,
+                              size: 28,
                             ),
                           ),
                           title: Text(
                             data['name'] ?? '',
                             style: const TextStyle(
-                              fontSize:15,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF1D1D1F),
                             ),
@@ -245,23 +284,23 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 '${data['category'] ?? ''} · ${data['address'] ?? ''}',
                                 style: const TextStyle(
-                                  fontSize:12,
+                                  fontSize: 12,
                                   color: Color(0xFF6E6E73),
                                 ),
                               ),
-                              const SizedBox(height:4),
+                              const SizedBox(height: 4),
                               Row(
                                 children: [
                                   const Icon(
                                     Icons.star_outline,
                                     color: Color(0xFFE8950A),
-                                    size:14,
+                                    size: 14,
                                   ),
-                                  const SizedBox(width:4),
+                                  const SizedBox(width: 4),
                                   Text(
-                                    '${data['rating'] ??0.0} · ${data['reviews_count'] ??0} reviews',
+                                    '${data['rating'] ?? 0.0} · ${data['reviews_count'] ?? 0} reviews',
                                     style: const TextStyle(
-                                      fontSize:12,
+                                      fontSize: 12,
                                       color: Color(0xFF6E6E73),
                                     ),
                                   ),
