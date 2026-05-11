@@ -12,7 +12,12 @@
           "package_name": "com.example.namnam"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+         "client_id": "907355889048-9bafvbch0hgpb8c9fqt54gughkamf70h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBkkyoypiwqfeCdEQX325nS-1b-bDK3QAg"

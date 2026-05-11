@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'firebase_options.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'login.dart';
 import 'home.dart';
 
@@ -20,30 +19,96 @@ class _SignupPageState extends State<SignupPage> {
   final confirmPasswordController = TextEditingController();
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
+  final googleSignIn = GoogleSignIn();
+  final auth = FirebaseAuth.instance;
+  final firestore = FirebaseFirestore.instance;
+
+  Future<void> signUpWithGoogle() async {
+    try {
+      var googleUser = await googleSignIn.signIn();
+      if (!mounted) return;
+      if (googleUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google sign-up cancelled')),
+        );
+        return;
+      }
+
+      var googleAuth = await googleUser.authentication;
+      if (!mounted) return;
+      var credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      var userCredential = await auth.signInWithCredential(credential);
+      if (!mounted) return;
+      var user = userCredential.user;
+
+      if (user != null) {
+        var userDoc = firestore.collection('vvusers').doc(user.uid);
+        var docSnapshot = await userDoc.get();
+        if (!mounted) return;
+
+        if (!docSnapshot.exists) {
+          await userDoc.set({
+            'user_id': user.uid,
+            'vvfullname': user.displayName ?? 'User',
+            'vvemail': user.email ?? '',
+            'vvcreated_at': FieldValue.serverTimestamp(),
+            'saved_restaurants': [],
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Account created successfully!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Welcome back!')),
+          );
+        }
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.message.toString()}')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
-      
+      backgroundColor: Color(0xFFF5F5F7),
       body: Center(
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: 24),
           shrinkWrap: true,
           children: [
 
-            const SizedBox(height: 40),
+            SizedBox(height: 40),
 
-            // App icon
             Center(
               child: Container(
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8950A),
+                  color: Color(0xFFE8950A),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.rice_bowl_rounded,
                   color: Colors.white,
                   size: 40,
@@ -51,9 +116,9 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
-            const Text(
+            Text(
               'Create account',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -63,9 +128,9 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
 
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
 
-            const Text(
+            Text(
               'Join NamNam and start reviewing',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -74,9 +139,8 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
 
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
-            // Grouped input fields
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -85,10 +149,9 @@ class _SignupPageState extends State<SignupPage> {
               child: Column(
                 children: [
 
-                  // Full name
                   TextField(
                     controller: fullnameController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Full name',
                       hintStyle: TextStyle(color: Color(0xFFAEAEB2)),
                       prefixIcon: Icon(
@@ -104,13 +167,12 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                   ),
 
-                  const Divider(height: 1, indent: 50, color: Color(0xFFE5E5EA)),
+                  Divider(height: 1, indent: 50, color: Color(0xFFE5E5EA)),
 
-                  // Email
                   TextField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Email',
                       hintStyle: TextStyle(color: Color(0xFFAEAEB2)),
                       prefixIcon: Icon(
@@ -126,16 +188,15 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                   ),
 
-                  const Divider(height: 1, indent: 50, color: Color(0xFFE5E5EA)),
+                  Divider(height: 1, indent: 50, color: Color(0xFFE5E5EA)),
 
-                  // Password
                   TextField(
                     controller: passwordController,
                     obscureText: obscurePassword,
                     decoration: InputDecoration(
                       hintText: 'Password',
-                      hintStyle: const TextStyle(color: Color(0xFFAEAEB2)),
-                      prefixIcon: const Icon(
+                      hintStyle: TextStyle(color: Color(0xFFAEAEB2)),
+                      prefixIcon: Icon(
                         Icons.lock_outline,
                         color: Color(0xFFAEAEB2),
                         size: 20,
@@ -145,7 +206,7 @@ class _SignupPageState extends State<SignupPage> {
                           obscurePassword
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: const Color(0xFFAEAEB2),
+                          color: Color(0xFFAEAEB2),
                           size: 20,
                         ),
                         onPressed: () {
@@ -155,23 +216,22 @@ class _SignupPageState extends State<SignupPage> {
                         },
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
+                      contentPadding: EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 16,
                       ),
                     ),
                   ),
 
-                  const Divider(height: 1, indent: 50, color: Color(0xFFE5E5EA)),
+                  Divider(height: 1, indent: 50, color: Color(0xFFE5E5EA)),
 
-                  // Confirm password
                   TextField(
                     controller: confirmPasswordController,
                     obscureText: obscureConfirmPassword,
                     decoration: InputDecoration(
                       hintText: 'Confirm password',
-                      hintStyle: const TextStyle(color: Color(0xFFAEAEB2)),
-                      prefixIcon: const Icon(
+                      hintStyle: TextStyle(color: Color(0xFFAEAEB2)),
+                      prefixIcon: Icon(
                         Icons.lock_outline,
                         color: Color(0xFFAEAEB2),
                         size: 20,
@@ -181,7 +241,7 @@ class _SignupPageState extends State<SignupPage> {
                           obscureConfirmPassword
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: const Color(0xFFAEAEB2),
+                          color: Color(0xFFAEAEB2),
                           size: 20,
                         ),
                         onPressed: () {
@@ -191,7 +251,7 @@ class _SignupPageState extends State<SignupPage> {
                         },
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
+                      contentPadding: EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 16,
                       ),
@@ -202,15 +262,14 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
-            // Create account with Firebase
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE8950A),
+                  backgroundColor: Color(0xFFE8950A),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -222,17 +281,15 @@ class _SignupPageState extends State<SignupPage> {
                   var password = passwordController.text.trim();
                   var confirmPassword = confirmPasswordController.text.trim();
 
-                  // Check if passwords match
                   if (password != confirmPassword) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Passwords do not match!')),
+                      SnackBar(content: Text('Passwords do not match!')),
                     );
                     return;
                   }
 
                   try {
-                    // Create user in Firebase Auth
-                    UserCredential userCredential = await FirebaseAuth.instance
+                    var userCredential = await FirebaseAuth.instance
                         .createUserWithEmailAndPassword(
                       email: email,
                       password: password,
@@ -240,7 +297,6 @@ class _SignupPageState extends State<SignupPage> {
 
                     await userCredential.user!.updateDisplayName(fullname);
 
-                    // Save user info to Firestore vvusers collection
                     await FirebaseFirestore.instance
                         .collection('vvusers')
                         .doc(userCredential.user!.uid)
@@ -252,24 +308,25 @@ class _SignupPageState extends State<SignupPage> {
                       'saved_restaurants': [],
                     });
 
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Registration successful!')),
+                      SnackBar(content: Text('Registration successful!')),
                     );
 
-                    // Navigate to Home
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const HomePage(),
+                        builder: (context) => HomePage(),
                       ),
                     );
                   } on FirebaseAuthException catch (e) {
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Error: ${e.message.toString()}')),
                     );
                   }
                 },
-                child: const Text(
+                child: Text(
                   'Create account',
                   style: TextStyle(
                     fontSize: 16,
@@ -279,10 +336,9 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
-            // Or continue with divider
-            const Row(
+            Row(
               children: [
                 Expanded(child: Divider(color: Color(0xFFE5E5EA))),
                 Padding(
@@ -299,70 +355,64 @@ class _SignupPageState extends State<SignupPage> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
-            // Google sign up button
             SizedBox(
               width: double.infinity,
               height: 52,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0xFFE5E5EA)),
+                  side: BorderSide(color: Color(0xFFE5E5EA)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Google sign-up coming soon!')),
-                  );
-                },
+                onPressed: signUpWithGoogle,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Google colored dots
                     Row(
                       children: [
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Color(0xFF4285F4),
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Color(0xFFEA4335),
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Color(0xFFFBBC05),
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Color(0xFF34A853),
                             shape: BoxShape.circle,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(width: 10),
-                    const Text(
+                    SizedBox(width: 10),
+                    Text(
                       'Sign up with Google',
                       style: TextStyle(
                         fontSize: 15,
@@ -375,13 +425,12 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
-            // Navigate to Login
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'Already have an account? ',
                   style: TextStyle(
                     fontSize: 14,
@@ -393,7 +442,7 @@ class _SignupPageState extends State<SignupPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
+                        builder: (context) => LoginPage(),
                       ),
                     );
                   },
@@ -401,9 +450,9 @@ class _SignupPageState extends State<SignupPage> {
                     padding: EdgeInsets.zero,
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    foregroundColor: const Color(0xFFE8950A),
+                    foregroundColor: Color(0xFFE8950A),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Sign in',
                     style: TextStyle(
                       fontSize: 14,
@@ -415,7 +464,7 @@ class _SignupPageState extends State<SignupPage> {
               ],
             ),
 
-            const SizedBox(height: 40),
+            SizedBox(height: 40),
 
           ],
         ),
