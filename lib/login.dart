@@ -43,15 +43,15 @@ class _LoginPageState extends State<LoginPage> {
       var user = userCredential.user;
 
       if (user != null) {
-        var userDoc = firestore.collection('vvusers').doc(user.uid);
+        var userDoc = firestore.collection('users').doc(user.uid);
         var docSnapshot = await userDoc.get();
         if (!mounted) return;
 
         if (!docSnapshot.exists) {
           await userDoc.set({
-            'vvfullname': user.displayName ?? 'User',
-            'vvemail': user.email ?? '',
-            'vvcreated_at': FieldValue.serverTimestamp(),
+            'fullname': user.displayName ?? 'User',
+            'email': user.email ?? '',
+            'created_at': FieldValue.serverTimestamp(),
           });
         }
 

@@ -46,16 +46,16 @@ class _SignupPageState extends State<SignupPage> {
       var user = userCredential.user;
 
       if (user != null) {
-        var userDoc = firestore.collection('vvusers').doc(user.uid);
+        var userDoc = firestore.collection('users').doc(user.uid);
         var docSnapshot = await userDoc.get();
         if (!mounted) return;
 
         if (!docSnapshot.exists) {
           await userDoc.set({
             'user_id': user.uid,
-            'vvfullname': user.displayName ?? 'User',
-            'vvemail': user.email ?? '',
-            'vvcreated_at': FieldValue.serverTimestamp(),
+            'fullname': user.displayName ?? 'User',
+            'email': user.email ?? '',
+            'created_at': FieldValue.serverTimestamp(),
             'saved_restaurants': [],
           });
 
@@ -298,13 +298,13 @@ class _SignupPageState extends State<SignupPage> {
                     await userCredential.user!.updateDisplayName(fullname);
 
                     await FirebaseFirestore.instance
-                        .collection('vvusers')
+                        .collection('users')
                         .doc(userCredential.user!.uid)
                         .set({
                       'user_id': userCredential.user!.uid,
-                      'vvfullname': fullname,
-                      'vvemail': email,
-                      'vvcreated_at': FieldValue.serverTimestamp(),
+                      'fullname': fullname,
+                      'email': email,
+                      'created_at': FieldValue.serverTimestamp(),
                       'saved_restaurants': [],
                     });
 

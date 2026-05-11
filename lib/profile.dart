@@ -14,7 +14,7 @@ class ProfilePage extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F5F7),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance
-            .collection('vvusers')
+            .collection('users')
             .doc(uid)
             .snapshots(),
         builder: (context, snapshot) {
@@ -24,7 +24,7 @@ class ProfilePage extends StatelessWidget {
 
           if (snapshot.hasData && snapshot.data!.exists) {
             var data = snapshot.data!.data() as Map<String, dynamic>;
-            var firestoreName = data['vvfullname'] as String? ?? '';
+            var firestoreName = data['fullname'] as String? ?? '';
             if (firestoreName.isNotEmpty) {
               displayName = firestoreName;
             } else {

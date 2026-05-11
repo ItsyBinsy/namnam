@@ -287,7 +287,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                                           stream: r['user_id'] == 'Anonymous'
                                               ? const Stream.empty()
                                               : FirebaseFirestore.instance
-                                              .collection('vvusers')
+                                              .collection('users')
                                               .doc(r['user_id'])
                                               .snapshots(),
                                           builder: (context, userSnap) {
@@ -297,7 +297,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                                               reviewerName = 'Anonymous';
                                             } else if (userSnap.hasData && userSnap.data!.exists) {
                                               var userData = userSnap.data!.data();
-                                              reviewerName = userData?['vvfullname']
+                                              reviewerName = userData?['fullname']
                                                   ?? r['user_id']
                                                   ?? 'Anonymous';
                                             }
