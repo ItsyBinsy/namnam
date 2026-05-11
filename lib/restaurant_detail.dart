@@ -131,8 +131,9 @@ class RestaurantDetailPage extends StatelessWidget {
                                 const SizedBox(height: 12),
 
                                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                                  stream: docRef
+                                  stream: FirebaseFirestore.instance
                                       .collection('reviews')
+                                      .where('restaurant_id', isEqualTo: restaurantId)
                                       .orderBy('timestamp', descending: true)
                                       .limit(5)
                                       .snapshots(),
