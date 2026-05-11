@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'search.dart';
 import 'profile.dart';
 import 'restaurant_detail.dart';
 
@@ -66,6 +67,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildBody(BuildContext context) {
     if (currentIndex ==0) return _buildHome(context);
+    if (currentIndex == 1) return SearchPage();
     if (currentIndex ==3) return ProfilePage();
     return const Center(child: Text('Coming soon'));
   }
@@ -116,27 +118,6 @@ class _HomePageState extends State<HomePage> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal:16, vertical:14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.search, color: Color(0xFFAEAEB2), size:20),
-                    SizedBox(width:10),
-                    Text(
-                      'Search restaurants...',
-                      style: TextStyle(
-                        color: Color(0xFFAEAEB2),
-                        fontSize:15,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height:16),
               SizedBox(
                 height:36,
                 child: ListView.builder(
