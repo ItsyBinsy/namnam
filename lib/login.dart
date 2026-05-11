@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'firebase_options.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'signup.dart';
 import 'home.dart';
 
@@ -17,29 +16,90 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool obscurePassword = true;
+  final googleSignIn = GoogleSignIn();
+  final auth = FirebaseAuth.instance;
+  final firestore = FirebaseFirestore.instance;
+
+  Future<void> signInWithGoogle() async {
+    try {
+      var googleUser = await googleSignIn.signIn();
+      if (!mounted) return;
+      if (googleUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google sign-in cancelled')),
+        );
+        return;
+      }
+
+      var googleAuth = await googleUser.authentication;
+      if (!mounted) return;
+      var credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      var userCredential = await auth.signInWithCredential(credential);
+      if (!mounted) return;
+      var user = userCredential.user;
+
+      if (user != null) {
+        var userDoc = firestore.collection('vvusers').doc(user.uid);
+        var docSnapshot = await userDoc.get();
+        if (!mounted) return;
+
+        if (!docSnapshot.exists) {
+          await userDoc.set({
+            'vvfullname': user.displayName ?? 'User',
+            'vvemail': user.email ?? '',
+            'vvcreated_at': FieldValue.serverTimestamp(),
+          });
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google sign-in successful!')),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.message.toString()}')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: Color(0xFFF5F5F7),
       body: Center(
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: 24),
           shrinkWrap: true,
           children: [
 
-            const SizedBox(height: 40),
+            SizedBox(height: 40),
 
-            // App icon
             Center(
               child: Container(
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8950A),
+                  color: Color(0xFFE8950A),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.rice_bowl_rounded,
                   color: Colors.white,
                   size: 40,
@@ -47,9 +107,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
-            const Text(
+            Text(
               'NamNam',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -59,9 +119,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
 
-            const Text(
+            Text(
               'Discover & review great food',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -70,9 +130,8 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
-            // Grouped input fields
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -83,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
                   TextField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Email',
                       hintStyle: TextStyle(color: Color(0xFFAEAEB2)),
                       prefixIcon: Icon(
@@ -99,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
 
-                  const Divider(
+                  Divider(
                     height: 1,
                     indent: 50,
                     color: Color(0xFFE5E5EA),
@@ -110,8 +169,8 @@ class _LoginPageState extends State<LoginPage> {
                     obscureText: obscurePassword,
                     decoration: InputDecoration(
                       hintText: 'Password',
-                      hintStyle: const TextStyle(color: Color(0xFFAEAEB2)),
-                      prefixIcon: const Icon(
+                      hintStyle: TextStyle(color: Color(0xFFAEAEB2)),
+                      prefixIcon: Icon(
                         Icons.lock_outline,
                         color: Color(0xFFAEAEB2),
                         size: 20,
@@ -121,7 +180,7 @@ class _LoginPageState extends State<LoginPage> {
                           obscurePassword
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: const Color(0xFFAEAEB2),
+                          color: Color(0xFFAEAEB2),
                           size: 20,
                         ),
                         onPressed: () {
@@ -131,7 +190,7 @@ class _LoginPageState extends State<LoginPage> {
                         },
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
+                      contentPadding: EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 16,
                       ),
@@ -141,15 +200,14 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
-            // Sign in with Firebase
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE8950A),
+                  backgroundColor: Color(0xFFE8950A),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -164,25 +222,25 @@ class _LoginPageState extends State<LoginPage> {
                       email: email,
                       password: password,
                     );
-
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Login successful!')),
+                      SnackBar(content: Text('Login successful!')),
                     );
 
-                    // Navigate to Home
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const HomePage(),
+                        builder: (context) => HomePage(),
                       ),
                     );
                   } on FirebaseAuthException catch (e) {
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Error: ${e.message.toString()}')),
                     );
                   }
                 },
-                child: const Text(
+                child: Text(
                   'Sign in',
                   style: TextStyle(
                     fontSize: 16,
@@ -192,10 +250,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
-            // Or continue with divider
-            const Row(
+            Row(
               children: [
                 Expanded(child: Divider(color: Color(0xFFE5E5EA))),
                 Padding(
@@ -212,70 +269,64 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
-            // Google sign in button
             SizedBox(
               width: double.infinity,
               height: 52,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0xFFE5E5EA)),
+                  side: BorderSide(color: Color(0xFFE5E5EA)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Google sign-in coming soon!')),
-                  );
-                },
+                onPressed: signInWithGoogle,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Google colored dots
                     Row(
                       children: [
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Color(0xFF4285F4),
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Color(0xFFEA4335),
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Color(0xFFFBBC05),
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Color(0xFF34A853),
                             shape: BoxShape.circle,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(width: 10),
-                    const Text(
+                    SizedBox(width: 10),
+                    Text(
                       'Sign in with Google',
                       style: TextStyle(
                         fontSize: 15,
@@ -288,13 +339,12 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
-            // Navigate to Sign Up
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'No account? ',
                   style: TextStyle(
                     fontSize: 14,
@@ -306,7 +356,7 @@ class _LoginPageState extends State<LoginPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const SignupPage(),
+                        builder: (context) => SignupPage(),
                       ),
                     );
                   },
@@ -314,9 +364,9 @@ class _LoginPageState extends State<LoginPage> {
                     padding: EdgeInsets.zero,
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    foregroundColor: const Color(0xFFE8950A),
+                    foregroundColor: Color(0xFFE8950A),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Sign up',
                     style: TextStyle(
                       fontSize: 14,
@@ -328,7 +378,7 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
 
-            const SizedBox(height: 40),
+            SizedBox(height: 40),
 
           ],
         ),
