@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'write_review.dart';
 
 class RestaurantDetailPage extends StatelessWidget {
   final String restaurantId;
@@ -161,8 +162,7 @@ class RestaurantDetailPage extends StatelessWidget {
                                         final i = entry.key;
                                         final r = entry.value.data();
 
-                                        final reviewerName = (r['user_id'] ?? 'Anonymous').toString();
-                                        final source = '';                                          // no source field
+                                        final source = '';
                                         final rating = (r['rating'] ?? 0) as int;
                                         final text = (r['content'] ?? '').toString();
                                         final photoUrl = r['photo_url']?.toString();
@@ -171,28 +171,54 @@ class RestaurantDetailPage extends StatelessWidget {
                                         String date = '';
                                         if (ts is Timestamp) {
                                           final dt = ts.toDate();
-                                          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                                          const months = ['Jan','Feb','Mar','Apr','May','Jun',
+                                            'Jul','Aug','Sep','Oct','Nov','Dec'];
                                           date = '${months[dt.month - 1]} ${dt.day}';
                                         }
 
-                                        final parts = reviewerName.trim().split(' ');
-                                        final avatarText = parts.length >= 2
-                                            ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
-                                            : reviewerName.substring(0, reviewerName.length.clamp(0, 2)).toUpperCase();
+                                        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                                          stream: r['user_id'] == 'Anonymous'
+                                              ? const Stream.empty()
+                                              : FirebaseFirestore.instance
+                                              .collection('vvusers')
+                                              .doc(r['user_id'])
+                                              .snapshots(),
+                                          builder: (context, userSnap) {
 
-                                        return Column(
-                                          children: [
-                                            _reviewCard(
-                                              avatarText: avatarText,
-                                              name: reviewerName,
-                                              source: source,
-                                              date: date,
-                                              rating: rating,
-                                              text: text,
-                                              photoUrl: photoUrl,
-                                            ),
-                                            if (i < reviews.length - 1) const SizedBox(height: 12),
-                                          ],
+                                            var perpost = r;
+                                            String reviewerName = 'Anonymous';
+
+                                            if (r['user_id'] == 'Anonymous') {
+                                              reviewerName = 'Anonymous';
+                                            } else if (userSnap.hasData && userSnap.data!.exists) {
+                                              final userData = userSnap.data!.data();
+                                              reviewerName = userData?['vvfullname']
+                                                  ?? perpost['user_id']
+                                                  ?? 'Anonymous';
+                                            }
+
+                                            final parts = reviewerName.trim().split(' ');
+                                            final avatarText = parts.length >= 2
+                                                ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
+                                                : reviewerName
+                                                .substring(0, reviewerName.length.clamp(0, 2))
+                                                .toUpperCase();
+
+                                            return Column(
+                                              children: [
+                                                _reviewCard(
+                                                  avatarText: avatarText,
+                                                  name: reviewerName,
+                                                  source: source,
+                                                  date: date,
+                                                  rating: rating,
+                                                  text: text,
+                                                  photoUrl: photoUrl,
+                                                ),
+                                                if (i < reviews.length - 1) const SizedBox(height: 12),
+                                              ],
+                                            );
+                                          },
                                         );
                                       }).toList(),
                                     );
@@ -219,7 +245,17 @@ class RestaurantDetailPage extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         elevation: 0,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WriteReviewPage(
+                              restaurantId: restaurantId,
+                              restaurantName: name,
+                            ),
+                          ),
+                        );
+                      },
                       child: const Text('+ Write a review', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
                     ),
                   ),

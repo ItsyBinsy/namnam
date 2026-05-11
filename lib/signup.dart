@@ -238,6 +238,8 @@ class _SignupPageState extends State<SignupPage> {
                       password: password,
                     );
 
+                    await userCredential.user!.updateDisplayName(fullname);
+
                     // Save user info to Firestore vvusers collection
                     await FirebaseFirestore.instance
                         .collection('vvusers')
