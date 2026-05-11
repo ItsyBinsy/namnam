@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'search.dart';
 import 'profile.dart';
+import 'saved.dart';
 import 'restaurant_detail.dart';
 
 class HomePage extends StatefulWidget {
@@ -68,6 +69,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBody(BuildContext context) {
     if (currentIndex ==0) return _buildHome(context);
     if (currentIndex == 1) return SearchPage();
+    if (currentIndex ==2) return SavedPage();
     if (currentIndex ==3) return ProfilePage();
     return const Center(child: Text('Coming soon'));
   }
