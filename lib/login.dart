@@ -176,9 +176,9 @@ class _LoginPageState extends State<LoginPage> {
                         builder: (context) => const HomePage(),
                       ),
                     );
-                  } catch (e) {
+                  } on FirebaseAuthException catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: ${e.toString()}')),
+                      SnackBar(content: Text('Error: ${e.message.toString()}')),
                     );
                   }
                 },

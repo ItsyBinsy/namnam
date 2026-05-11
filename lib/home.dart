@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'login.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,7 +29,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
-      body: _buildBody(),
+      body: _buildBody(context),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         selectedItemColor: const Color(0xFFE8950A),
@@ -65,8 +66,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     if (currentIndex == 0) return _buildHome();
+    if (currentIndex == 3) return _buildProfile(context);
     // Search, Saved, Profile will be added later
     return const Center(child: Text('Coming soon'));
   }
@@ -321,4 +323,55 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+}
+
+Widget _buildProfile(BuildContext context) {
+  final user = FirebaseAuth.instance.currentUser;
+
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CircleAvatar(
+          radius: 50,
+          backgroundColor: const Color(0xFFFFF8EC),
+          child: const Icon(Icons.person, size: 50, color: Color(0xFFE8950A)),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          user?.displayName ?? "User",
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1D1D1F),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          user?.email ?? "",
+          style: const TextStyle(fontSize: 14, color: Color(0xFF6E6E73)),
+        ),
+        const SizedBox(height: 30),
+        ElevatedButton.icon(
+          onPressed: () async {
+            await FirebaseAuth.instance.signOut();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LoginPage()),
+            );
+          },
+          icon: const Icon(Icons.logout),
+          label: const Text("Logout"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFE8950A),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }

@@ -25,6 +25,7 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
+      
       body: Center(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -260,9 +261,9 @@ class _SignupPageState extends State<SignupPage> {
                         builder: (context) => const HomePage(),
                       ),
                     );
-                  } catch (e) {
+                  } on FirebaseAuthException catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: ${e.toString()}')),
+                      SnackBar(content: Text('Error: ${e.message.toString()}')),
                     );
                   }
                 },
