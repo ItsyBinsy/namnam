@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class WriteReviewPage extends StatefulWidget {
   final String restaurantId;
@@ -20,6 +23,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
   final reviewController = TextEditingController();
   int selectedRating = 0;
   bool isAnonymous = false;
+  File? selectedImage;
 
   @override
   Widget build(BuildContext context) {
@@ -123,6 +127,64 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
 
           const SizedBox(height: 16),
 
+          // Photo upload
+          const Text(
+            'ADD PHOTO',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6E6E73),
+              letterSpacing: 0.5,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          TextButton(
+            onPressed: () async {
+              final pickedImage = await ImagePicker().pickImage(source: ImageSource.gallery);
+              if (pickedImage != null) {
+                setState(() {
+                  selectedImage = File(pickedImage.path);
+                });
+              }
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: Color(0xFFE5E5EA)),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.photo_outlined, color: Color(0xFFE8950A)),
+                SizedBox(width: 8),
+                Text('Choose from gallery', style: TextStyle(color: Color(0xFFE8950A), fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Preview selected image
+          if (selectedImage != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.file(
+                selectedImage!,
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          const SizedBox(height: 6),
+
           // Anonymous checkbox
           Container(
             decoration: BoxDecoration(
@@ -186,16 +248,27 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                 }
 
                 try {
-                  await FirebaseFirestore.instance
-                      .collection('reviews')
-                      .add({
+                  String? uploadedImageUrl;
+
+                  // Upload image to Firebase Storage
+                  if (selectedImage != null) {
+                    String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+                    Reference storageRef = FirebaseStorage.instance
+                        .ref()
+                        .child('review_images')
+                        .child('$fileName.jpg');
+                    await storageRef.putFile(selectedImage!);
+                    uploadedImageUrl = await storageRef.getDownloadURL();
+                  }
+
+                  await FirebaseFirestore.instance.collection('reviews').add({
                     'restaurant_id': widget.restaurantId,
                     'user_id': isAnonymous
                         ? 'Anonymous'
                         : FirebaseAuth.instance.currentUser!.uid,
                     'rating': selectedRating,
                     'content': content,
-                    'photo_url': '',
+                    'photo_url': uploadedImageUrl ?? '',
                     'timestamp': FieldValue.serverTimestamp(),
                   });
 

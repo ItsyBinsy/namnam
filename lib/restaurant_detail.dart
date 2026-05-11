@@ -63,35 +63,36 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F7),
-      body: SafeArea(
-        child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: docRef.snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Center(child: Text('Failed to load restaurant details.'));
-            }
-            if (!snapshot.hasData) {
-              return Center(
-                child: CircularProgressIndicator(color: Color(0xFFE8950A)),
-              );
-            }
+      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: docRef.snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Failed to load restaurant details.'));
+          }
+          if (!snapshot.hasData) {
+            return Center(
+              child: CircularProgressIndicator(color: Color(0xFFE8950A)),
+            );
+          }
 
-            var data = snapshot.data!.data();
-            if (data == null) {
-              return Center(child: Text('Restaurant not found.'));
-            }
+          var data = snapshot.data!.data();
+          if (data == null) {
+            return Center(child: Text('Restaurant not found.'));
+          }
 
-            var name = (data['name'] ?? '').toString();
-            var category = (data['category'] ?? '').toString();
-            var address = (data['address'] ?? '').toString();
-            var rating = (data['rating'] ?? 0).toString();
-            var reviewsCount = (data['reviews_count'] ?? 0).toString();
+          var name = (data['name'] ?? '').toString();
+          var category = (data['category'] ?? '').toString();
+          var address = (data['address'] ?? '').toString();
+          var rating = (data['rating'] ?? 0).toString();
+          var reviewsCount = (data['reviews_count'] ?? 0).toString();
 
-            return Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Container(
+          return Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    Container(
                       margin: EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Color(0xFFF2F2F5),
@@ -117,37 +118,32 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      InkWell(
-                                        onTap: () => Navigator.pop(context),
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: Container(
-                                          width: 34,
-                                          height: 34,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF3A3A3C)),
+                                      // Back button
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: Size(34, 34),
+                                          shape: CircleBorder(),
+                                          backgroundColor: Colors.white,
                                         ),
+                                        child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF3A3A3C)),
                                       ),
 
                                       Text('...', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF3A3A3C))),
 
                                       if (uid == null)
-                                        InkWell(
-                                          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                                        TextButton(
+                                          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(content: Text('Sign in to save places')),
                                           ),
-                                          borderRadius: BorderRadius.circular(16),
-                                          child: Container(
-                                            width: 34,
-                                            height: 34,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Icon(Icons.bookmark_border_rounded, size: 18, color: Color(0xFF3A3A3C)),
+                                          style: TextButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            minimumSize: Size(34, 34),
+                                            shape: CircleBorder(),
+                                            backgroundColor: Colors.white,
                                           ),
+                                          child: Icon(Icons.bookmark_border_rounded, size: 18, color: Color(0xFF3A3A3C)),
                                         )
                                       else
                                         StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -159,21 +155,19 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                                               var arr = savedData?['saved_restaurants'] as List<dynamic>?;
                                               isSaved = arr?.contains(widget.restaurantId) == true;
                                             }
-                                            return InkWell(
-                                              onTap: () => toggleSaved(context, isSaved),
-                                              borderRadius: BorderRadius.circular(16),
-                                              child: Container(
-                                                width: 34,
-                                                height: 34,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: Icon(
-                                                  isSaved ? Icons.bookmark : Icons.bookmark_border_rounded,
-                                                  size: 18,
-                                                  color: Color(0xFF3A3A3C),
-                                                ),
+                                            // Bookmark button
+                                            return TextButton(
+                                              onPressed: () => toggleSaved(context, isSaved),
+                                              style: TextButton.styleFrom(
+                                                padding: EdgeInsets.zero,
+                                                minimumSize: Size(34, 34),
+                                                shape: CircleBorder(),
+                                                backgroundColor: Colors.white,
+                                              ),
+                                              child: Icon(
+                                                isSaved ? Icons.bookmark : Icons.bookmark_border_rounded,
+                                                size: 18,
+                                                color: Color(0xFF3A3A3C),
                                               ),
                                             );
                                           },
@@ -387,40 +381,40 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                         ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
+              ),
 
-                Padding(
-                  padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFE8950A),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => WriteReviewPage(
-                              restaurantId: widget.restaurantId,
-                              restaurantName: name,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Text('+ Write a review', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+              Padding(
+                padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFE8950A),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
                     ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => WriteReviewPage(
+                            restaurantId: widget.restaurantId,
+                            restaurantName: name,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Text('+ Write a review', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
                   ),
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
