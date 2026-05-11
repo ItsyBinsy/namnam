@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'login.dart';
+import 'restaurant_detail.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
-  @override
-  State<HomePage> createState() => _HomePageState();
+  @override State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int currentIndex = 0;
+  int currentIndex =0;
   String selectedCategory = 'All';
 
   final List<String> categories = [
@@ -24,11 +25,10 @@ class _HomePageState extends State<HomePage> {
     'Grill',
   ];
 
-  @override
-  Widget build(BuildContext context) {
+  @override Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
-      body: _buildBody(),
+      body: _buildBody(context),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         selectedItemColor: const Color(0xFFE8950A),
@@ -65,28 +65,26 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildBody() {
-    if (currentIndex == 0) return _buildHome();
-    // Search, Saved, Profile will be added later
+  Widget _buildBody(BuildContext context) {
+    if (currentIndex ==0) return _buildHome(context);
+    if (currentIndex ==3) return _buildProfile(context);
     return const Center(child: Text('Coming soon'));
   }
 
-  Widget _buildHome() {
+  Widget _buildHome(BuildContext context) {
     return Column(
       children: [
-
-        // AppBar area
         Container(
           color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(16, 50, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16,50,16,12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width:32,
+                    height:32,
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8950A),
                       borderRadius: BorderRadius.circular(8),
@@ -94,14 +92,14 @@ class _HomePageState extends State<HomePage> {
                     child: const Icon(
                       Icons.rice_bowl_rounded,
                       color: Colors.white,
-                      size: 18,
+                      size:18,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width:8),
                   const Text(
                     'NamNam',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize:20,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1D1D1F),
                     ),
@@ -115,45 +113,39 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-
         Expanded(
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-
-              // Search bar
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal:16, vertical:14),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: const [
-                    Icon(Icons.search, color: Color(0xFFAEAEB2), size: 20),
-                    SizedBox(width: 10),
+                    Icon(Icons.search, color: Color(0xFFAEAEB2), size:20),
+                    SizedBox(width:10),
                     Text(
                       'Search restaurants...',
                       style: TextStyle(
                         color: Color(0xFFAEAEB2),
-                        fontSize: 15,
+                        fontSize:15,
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // Category filter chips
+              const SizedBox(height:16),
               SizedBox(
-                height: 36,
+                height:36,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: categories.length,
                   itemBuilder: (context, index) {
-                    var category = categories[index];
-                    var isSelected = selectedCategory == category;
+                    final category = categories[index];
+                    final isSelected = selectedCategory == category;
                     return TextButton(
                       onPressed: () {
                         setState(() {
@@ -161,13 +153,10 @@ class _HomePageState extends State<HomePage> {
                         });
                       },
                       style: TextButton.styleFrom(
-                        backgroundColor: isSelected
-                            ? const Color(0xFFE8950A)
+                        backgroundColor: isSelected ? const Color(0xFFE8950A)
                             : Colors.white,
-                        foregroundColor: isSelected
-                            ? Colors.white
-                            : const Color(0xFF6E6E73),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        foregroundColor: isSelected ? Colors.white : const Color(0xFF6E6E73),
+                        padding: const EdgeInsets.symmetric(horizontal:16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -176,34 +165,26 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: Text(
                         category,
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(fontSize:13),
                       ),
                     );
                   },
                 ),
               ),
-
-              const SizedBox(height: 20),
-
+              const SizedBox(height:20),
               const Text(
                 'Near you',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize:20,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1D1D1F),
                 ),
               ),
-
-              const SizedBox(height: 12),
-
-              // Restaurant list from Firestore
+              const SizedBox(height:12),
               StreamBuilder<QuerySnapshot>(
                 stream: selectedCategory == 'All'
-                    ? FirebaseFirestore.instance
-                    .collection('tbl_restaurants')
-                    .snapshots()
-                    : FirebaseFirestore.instance
-                    .collection('tbl_restaurants')
+                    ? FirebaseFirestore.instance.collection('tbl_restaurants').snapshots()
+                    : FirebaseFirestore.instance .collection('tbl_restaurants')
                     .where('category', isEqualTo: selectedCategory)
                     .snapshots(),
                 builder: (context, snapshot) {
@@ -215,7 +196,7 @@ class _HomePageState extends State<HomePage> {
                     );
                   }
 
-                  var restaurants = snapshot.data!.docs;
+                  final restaurants = snapshot.data!.docs;
 
                   if (restaurants.isEmpty) {
                     return const Center(
@@ -234,15 +215,11 @@ class _HomePageState extends State<HomePage> {
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: restaurants.length,
                     itemBuilder: (context, index) {
-                      var restaurant = restaurants[index];
-                      var name = restaurant['name'] ?? '';
-                      var address = restaurant['address'] ?? '';
-                      var category = restaurant['category'] ?? '';
-                      var rating = restaurant['rating'] ?? 0.0;
-                      var reviewsCount = restaurant['reviews_count'] ?? 0;
+                      final restaurant = restaurants[index];
+                      final data = restaurant.data() as Map<String, dynamic>;
 
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom:12),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(14),
@@ -250,11 +227,18 @@ class _HomePageState extends State<HomePage> {
                         child: ListTile(
                           contentPadding: const EdgeInsets.all(12),
                           onTap: () {
-                            // Navigate to Restaurant Detail (coming soon)
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RestaurantDetailPage(
+                                  restaurantId: restaurant.id,
+                                ),
+                              ),
+                            );
                           },
                           leading: Container(
-                            width: 56,
-                            height: 56,
+                            width:56,
+                            height:56,
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFF8EC),
                               borderRadius: BorderRadius.circular(10),
@@ -262,13 +246,13 @@ class _HomePageState extends State<HomePage> {
                             child: const Icon(
                               Icons.restaurant,
                               color: Color(0xFFE8950A),
-                              size: 28,
+                              size:28,
                             ),
                           ),
                           title: Text(
-                            name,
+                            data['name'] ?? '',
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize:15,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF1D1D1F),
                             ),
@@ -277,25 +261,25 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '$category · $address',
+                                '${data['category'] ?? ''} · ${data['address'] ?? ''}',
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize:12,
                                   color: Color(0xFF6E6E73),
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height:4),
                               Row(
                                 children: [
                                   const Icon(
                                     Icons.star_outline,
                                     color: Color(0xFFE8950A),
-                                    size: 14,
+                                    size:14,
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width:4),
                                   Text(
-                                    '$rating · $reviewsCount reviews',
+                                    '${data['rating'] ??0.0} · ${data['reviews_count'] ??0} reviews',
                                     style: const TextStyle(
-                                      fontSize: 12,
+                                      fontSize:12,
                                       color: Color(0xFF6E6E73),
                                     ),
                                   ),
@@ -313,12 +297,61 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
               ),
-
             ],
           ),
         ),
-
       ],
+    );
+  }
+
+  Widget _buildProfile(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircleAvatar(
+            radius:50,
+            backgroundColor: const Color(0xFFFFF8EC),
+            child: const Icon(Icons.person, size:50, color: Color(0xFFE8950A)),
+          ),
+          const SizedBox(height:16),
+          Text(
+            user?.displayName ?? "User",
+            style: const TextStyle(
+              fontSize:20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1D1D1F),
+            ),
+          ),
+          const SizedBox(height:8),
+          Text(
+            user?.email ?? "",
+            style: const TextStyle(fontSize:14, color: Color(0xFF6E6E73)),
+          ),
+          const SizedBox(height:30),
+          ElevatedButton.icon(
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginPage()),
+              );
+            },
+            icon: const Icon(Icons.logout),
+            label: const Text("Logout"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE8950A),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal:30, vertical:12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
