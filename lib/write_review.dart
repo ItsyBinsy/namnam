@@ -127,7 +127,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
 
           const SizedBox(height: 16),
 
-          // Photo upload
+          // upload photo
           const Text(
             'ADD PHOTO',
             style: TextStyle(
@@ -169,7 +169,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
 
           const SizedBox(height: 10),
 
-          // Preview selected image
+          // Preview image
           if (selectedImage != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
@@ -185,7 +185,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
 
           const SizedBox(height: 6),
 
-          // Anonymous checkbox
+          // anonymous
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -250,7 +250,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                 try {
                   String? uploadedImageUrl;
 
-                  // Upload image to Firebase Storage
+                  // Upload img to Firebase
                   if (selectedImage != null) {
                     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
                     Reference storageRef = FirebaseStorage.instance
@@ -273,7 +273,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                     'timestamp': FieldValue.serverTimestamp(),
                   });
 
-                  // Update restaurant rating and reviews_count
+                  // Update restaurant rating and reviews count
                   var allReviews = await FirebaseFirestore.instance
                       .collection('reviews')
                       .where('restaurant_id', isEqualTo: widget.restaurantId)

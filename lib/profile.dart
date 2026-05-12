@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login.dart';
 import 'my_reviews.dart';
+import 'edit_profile.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -47,7 +48,7 @@ class ProfilePage extends StatelessWidget {
           shrinkWrap: true,
           children: [
 
-            // Avatar + info
+            // avatar and info
             Row(
               children: [
                 Container(
@@ -107,7 +108,7 @@ class ProfilePage extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Stats row
+            // stats row
             StreamBuilder<DocumentSnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('saved')
@@ -231,7 +232,7 @@ class ProfilePage extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Menu rows
+            // rows
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -260,6 +261,60 @@ class ProfilePage extends StatelessWidget {
                     ),
                     title: const Text(
                       'My reviews',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    ),
+                    trailing: const Icon(Icons.chevron_right, color: Color(0xFFAEAEB2)),
+                  ),
+
+                  const Divider(height: 1, indent: 56, color: Color(0xFFE5E5EA)),
+
+                  ListTile(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditProfilePage(
+                            uid: uid,
+                            currentName: displayName,
+                          ),
+                        ),
+                      );
+                    },
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF34C759),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
+                    ),
+                    title: const Text(
+                      'Edit profile',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    ),
+                    trailing: const Icon(Icons.chevron_right, color: Color(0xFFAEAEB2)),
+                  ),
+
+                  const Divider(height: 1, indent: 56, color: Color(0xFFE5E5EA)),
+
+                  ListTile(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Settings is coming soon!')),
+                      );
+                    },
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF636366),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.settings_rounded, color: Colors.white, size: 20),
+                    ),
+                    title: const Text(
+                      'Settings',
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                     ),
                     trailing: const Icon(Icons.chevron_right, color: Color(0xFFAEAEB2)),
