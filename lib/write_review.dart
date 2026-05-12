@@ -261,6 +261,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                     uploadedImageUrl = await storageRef.getDownloadURL();
                   }
 
+                  // Save review to Firestore
                   await FirebaseFirestore.instance.collection('reviews').add({
                     'restaurant_id': widget.restaurantId,
                     'user_id': isAnonymous
@@ -270,6 +271,27 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                     'content': content,
                     'photo_url': uploadedImageUrl ?? '',
                     'timestamp': FieldValue.serverTimestamp(),
+                  });
+
+                  // Update restaurant rating and reviews_count
+                  var allReviews = await FirebaseFirestore.instance
+                      .collection('reviews')
+                      .where('restaurant_id', isEqualTo: widget.restaurantId)
+                      .get();
+
+                  var total = 0.0;
+                  for (var doc in allReviews.docs) {
+                    total += ((doc.data()['rating'] ?? 0) as num).toDouble();
+                  }
+
+                  var newAvg = total / allReviews.docs.length;
+
+                  await FirebaseFirestore.instance
+                      .collection('tbl_restaurants')
+                      .doc(widget.restaurantId)
+                      .update({
+                    'reviews_count': allReviews.docs.length,
+                    'rating': double.parse(newAvg.toStringAsFixed(1)),
                   });
 
                   ScaffoldMessenger.of(context).showSnackBar(

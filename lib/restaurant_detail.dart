@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'write_review.dart';
+import 'all_reviews.dart';
 
 class RestaurantDetailPage extends StatefulWidget {
   final String restaurantId;
@@ -233,8 +234,26 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text('Reviews', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E), letterSpacing: -0.6)),
-                                    Text('See all', style: TextStyle(fontSize: 20, color: Color(0xFFE8950A), fontWeight: FontWeight.w700)),
+                                    Text('Reviews', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E), letterSpacing: -0.6)),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => AllReviewsPage(
+                                              restaurantId: widget.restaurantId,
+                                              restaurantName: name,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      style: TextButton.styleFrom(
+                                        padding: EdgeInsets.zero,
+                                        minimumSize: Size.zero,
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: Text('See all', style: TextStyle(fontSize: 20, color: Color(0xFFE8950A), fontWeight: FontWeight.w700)),
+                                    ),
                                   ],
                                 ),
                                 SizedBox(height: 12),

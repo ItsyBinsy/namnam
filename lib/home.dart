@@ -25,7 +25,6 @@ class _HomePageState extends State<HomePage> {
     'Italian',
     'Japanese',
     'Drinks',
-
   ];
 
   @override Widget build(BuildContext context) {
@@ -86,33 +85,28 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8950A),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.rice_bowl_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'NamNam',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1D1D1F),
-                        ),
-                      ),
-                    ],
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8950A),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.rice_bowl_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'NamNam',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1D1D1F),
+                    ),
                   ),
                 ],
               ),
@@ -164,162 +158,163 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+
+        Container(
+          color: const Color(0xFFF5F5F7),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: SizedBox(
+            height: 36,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                final isSelected = selectedCategory == category;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        selectedCategory = category;
+                      });
+                    },
+                    style: TextButton.styleFrom(
+                      backgroundColor: isSelected ? const Color(0xFFE8950A) : Colors.white,
+                      foregroundColor: isSelected ? Colors.white : const Color(0xFF6E6E73),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      category,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              SizedBox(
-                height: 36,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: categories.length,
-                  itemBuilder: (context, index) {
-                    final category = categories[index];
-                    final isSelected = selectedCategory == category;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: TextButton(
-                        onPressed: () {
-                          setState(() {
-                            selectedCategory = category;
-                          });
-                        },
-                        style: TextButton.styleFrom(
-                          backgroundColor: isSelected ? const Color(0xFFE8950A) : Colors.white,
-                          foregroundColor: isSelected ? Colors.white : const Color(0xFF6E6E73),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+          child: StreamBuilder<QuerySnapshot>(
+            stream: selectedCategory == 'All'
+                ? FirebaseFirestore.instance.collection('tbl_restaurants').snapshots()
+                : FirebaseFirestore.instance
+                .collection('tbl_restaurants')
+                .where('category', isEqualTo: selectedCategory)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFE8950A),
+                  ),
+                );
+              }
+
+              final restaurants = snapshot.data!.docs;
+
+              if (restaurants.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Text(
+                      'No restaurants found.',
+                      style: TextStyle(color: Color(0xFF6E6E73)),
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                itemCount: restaurants.length,
+                itemBuilder: (context, index) {
+                  final restaurant = restaurants[index];
+                  final data = restaurant.data() as Map<String, dynamic>;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(12),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RestaurantDetailPage(
+                              restaurantId: restaurant.id,
+                            ),
                           ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          category,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              StreamBuilder<QuerySnapshot>(
-                stream: selectedCategory == 'All'
-                    ? FirebaseFirestore.instance.collection('tbl_restaurants').snapshots()
-                    : FirebaseFirestore.instance.collection('tbl_restaurants')
-                    .where('category', isEqualTo: selectedCategory)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFFE8950A),
-                      ),
-                    );
-                  }
-
-                  final restaurants = snapshot.data!.docs;
-
-                  if (restaurants.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32),
-                        child: Text(
-                          'No restaurants found.',
-                          style: TextStyle(color: Color(0xFF6E6E73)),
-                        ),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: restaurants.length,
-                    itemBuilder: (context, index) {
-                      final restaurant = restaurants[index];
-                      final data = restaurant.data() as Map<String, dynamic>;
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
+                        );
+                      },
+                      leading: Container(
+                        width: 56,
+                        height: 56,
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
+                          color: const Color(0xFFFFF8EC),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(12),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RestaurantDetailPage(
-                                  restaurantId: restaurant.id,
-                                ),
-                              ),
-                            );
-                          },
-                          leading: Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF8EC),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.restaurant,
-                              color: Color(0xFFE8950A),
-                              size: 28,
-                            ),
-                          ),
-                          title: Text(
-                            data['name'] ?? '',
+                        child: const Icon(
+                          Icons.restaurant,
+                          color: Color(0xFFE8950A),
+                          size: 28,
+                        ),
+                      ),
+                      title: Text(
+                        data['name'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1D1D1F),
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${data['category'] ?? ''} · ${data['address'] ?? ''}',
                             style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1D1D1F),
+                              fontSize: 12,
+                              color: Color(0xFF6E6E73),
                             ),
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          const SizedBox(height: 4),
+                          Row(
                             children: [
+                              const Icon(
+                                Icons.star_outline,
+                                color: Color(0xFFE8950A),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
                               Text(
-                                '${data['category'] ?? ''} · ${data['address'] ?? ''}',
+                                '${data['rating'] ?? 0.0} · ${data['reviews_count'] ?? 0} reviews',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF6E6E73),
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.star_outline,
-                                    color: Color(0xFFE8950A),
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${data['rating'] ?? 0.0} · ${data['reviews_count'] ?? 0} reviews',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF6E6E73),
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ],
                           ),
-                          trailing: const Icon(
-                            Icons.chevron_right,
-                            color: Color(0xFFAEAEB2),
-                          ),
-                        ),
-                      );
-                    },
+                        ],
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                        color: Color(0xFFAEAEB2),
+                      ),
+                    ),
                   );
                 },
-              ),
-            ],
+              );
+            },
           ),
         ),
       ],

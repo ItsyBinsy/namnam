@@ -31,7 +31,6 @@ class _SearchPageState extends State<SearchPage> {
     return Column(
       children: [
 
-        // Header
         Container(
           color: Colors.white,
           padding: const EdgeInsets.fromLTRB(16, 50, 16, 12),
@@ -103,7 +102,6 @@ class _SearchPageState extends State<SearchPage> {
 
               const SizedBox(height: 12),
 
-              // Category filter pills
               SizedBox(
                 height: 34,
                 child: ListView.builder(
@@ -158,7 +156,6 @@ class _SearchPageState extends State<SearchPage> {
 
               const SizedBox(height: 10),
 
-              // Star rating filter
               Row(
                 children: [
                   const Text(
@@ -210,7 +207,6 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ),
 
-        // Results
         Expanded(
           child: StreamBuilder(
             stream: FirebaseFirestore.instance
@@ -238,7 +234,6 @@ class _SearchPageState extends State<SearchPage> {
                 return matchesSearch && matchesCategory && matchesRating;
               }).toList();
 
-              // Empty state
               if (searchQuery.isEmpty && selectedCategory.isEmpty && minRating == 0) {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -318,121 +313,117 @@ class _SearchPageState extends State<SearchPage> {
                 );
               }
 
-              return ListView(
-                padding: const EdgeInsets.all(16),
-                shrinkWrap: true,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '${results.length} results',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1D1D1F),
-                            ),
-                          ),
-                          if (searchQuery.isNotEmpty)
+              return ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                itemCount: results.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
                             TextSpan(
-                              text: ' for "$searchQuery"',
+                              text: '${results.length} results',
                               style: const TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF6E6E73),
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1D1D1F),
                               ),
                             ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: results.length,
-                    itemBuilder: (context, index) {
-                      var restaurant = results[index];
-                      var data = restaurant.data();
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(12),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RestaurantDetailPage(
-                                  restaurantId: restaurant.id,
+                            if (searchQuery.isNotEmpty)
+                              TextSpan(
+                                text: ' for "$searchQuery"',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF6E6E73),
                                 ),
                               ),
-                            );
-                          },
-                          leading: Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF8EC),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.restaurant,
-                              color: Color(0xFFE8950A),
-                              size: 28,
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  var restaurant = results[index - 1];
+                  var data = restaurant.data();
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(12),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RestaurantDetailPage(
+                              restaurantId: restaurant.id,
                             ),
                           ),
-                          title: Text(
-                            data['name'] ?? '',
+                        );
+                      },
+                      leading: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8EC),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.restaurant,
+                          color: Color(0xFFE8950A),
+                          size: 28,
+                        ),
+                      ),
+                      title: Text(
+                        data['name'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1D1D1F),
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${data['category'] ?? ''} · ${data['address'] ?? ''}',
                             style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1D1D1F),
+                              fontSize: 12,
+                              color: Color(0xFF6E6E73),
                             ),
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          const SizedBox(height: 4),
+                          Row(
                             children: [
+                              const Icon(
+                                Icons.star_outline,
+                                color: Color(0xFFE8950A),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
                               Text(
-                                '${data['category'] ?? ''} · ${data['address'] ?? ''}',
+                                '${data['rating'] ?? 0.0} · ${data['reviews_count'] ?? 0} reviews',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF6E6E73),
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.star_outline,
-                                    color: Color(0xFFE8950A),
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${data['rating'] ?? 0.0} · ${data['reviews_count'] ?? 0} reviews',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF6E6E73),
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ],
                           ),
-                          trailing: const Icon(
-                            Icons.chevron_right,
-                            color: Color(0xFFAEAEB2),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                        ],
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                        color: Color(0xFFAEAEB2),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),
