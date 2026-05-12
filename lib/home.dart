@@ -19,12 +19,13 @@ class _HomePageState extends State<HomePage> {
   final List<String> categories = [
     'All',
     'Asian',
-    'Italian',
     'Casual',
-    'Japanese',
     'Chicken',
-    'Drinks',
     'Grill',
+    'Italian',
+    'Japanese',
+    'Drinks',
+
   ];
 
   @override Widget build(BuildContext context) {

@@ -20,7 +20,6 @@ class ProfilePage extends StatelessWidget {
       builder: (context, snapshot) {
 
         String displayName = 'User';
-        int savedCount = 0;
         String memberSince = '';
 
         if (snapshot.hasData && snapshot.data!.exists) {
@@ -31,8 +30,6 @@ class ProfilePage extends StatelessWidget {
           } else {
             displayName = FirebaseAuth.instance.currentUser?.displayName ?? 'User';
           }
-          var saved = data['saved_restaurants'] as List<dynamic>? ?? [];
-          savedCount = saved.length;
 
           var createdAt = data['created_at'];
           if (createdAt is Timestamp) {
@@ -111,109 +108,123 @@ class ProfilePage extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Stats row
-            StreamBuilder(
+            StreamBuilder<DocumentSnapshot>(
               stream: FirebaseFirestore.instance
-                  .collection('reviews')
-                  .where('user_id', isEqualTo: uid)
+                  .collection('saved')
+                  .doc(uid)
                   .snapshots(),
-              builder: (context, reviewSnap) {
-                var reviewCount = 0;
-                var avgRating = 0.0;
-
-                if (reviewSnap.hasData) {
-                  var docs = reviewSnap.data!.docs;
-                  reviewCount = docs.length;
-
-                  if (reviewCount > 0) {
-                    var total = 0.0;
-                    for (var doc in docs) {
-                      var data = doc.data();
-                      total += ((data['rating'] ?? 0) as num).toDouble();
-                    }
-                    avgRating = total / reviewCount;
-                  }
+              builder: (context, savedSnap) {
+                var savedCount = 0;
+                if (savedSnap.hasData && savedSnap.data!.exists) {
+                  var data = savedSnap.data!.data() as Map<String, dynamic>?;
+                  savedCount = (data?['saved_restaurants'] as List<dynamic>?)?.length ?? 0;
                 }
 
-                return Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              reviewCount.toString(),
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFE8950A),
-                              ),
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('reviews')
+                      .where('user_id', isEqualTo: uid)
+                      .snapshots(),
+                  builder: (context, reviewSnap) {
+                    var reviewCount = 0;
+                    var avgRating = 0.0;
+
+                    if (reviewSnap.hasData) {
+                      var docs = reviewSnap.data!.docs;
+                      reviewCount = docs.length;
+
+                      if (reviewCount > 0) {
+                        var total = 0.0;
+                        for (var doc in docs) {
+                          var data = doc.data() as Map<String, dynamic>;
+                          total += ((data['rating'] ?? 0) as num).toDouble();
+                        }
+                        avgRating = total / reviewCount;
+                      }
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            Text(
-                              reviewCount == 1 ? 'Review' : 'Reviews',
-                              style: TextStyle(fontSize: 12, color: Color(0xFF6E6E73)),
+                            child: Column(
+                              children: [
+                                Text(
+                                  reviewCount.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFE8950A),
+                                  ),
+                                ),
+                                Text(
+                                  reviewCount == 1 ? 'Review' : 'Reviews',
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFF6E6E73)),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              savedCount.toString(),
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFE8950A),
-                              ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            const Text(
-                              'Saved',
-                              style: TextStyle(fontSize: 12, color: Color(0xFF6E6E73)),
+                            child: Column(
+                              children: [
+                                Text(
+                                  savedCount.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFE8950A),
+                                  ),
+                                ),
+                                const Text(
+                                  'Saved',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF6E6E73)),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              reviewCount > 0 ? avgRating.toStringAsFixed(1) : '—',
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFE8950A),
-                              ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            const Text(
-                              'Avg Rating',
-                              style: TextStyle(fontSize: 12, color: Color(0xFF6E6E73)),
+                            child: Column(
+                              children: [
+                                Text(
+                                  reviewCount > 0 ? avgRating.toStringAsFixed(1) : '—',
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFE8950A),
+                                  ),
+                                ),
+                                const Text(
+                                  'Avg Rating',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF6E6E73)),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
+                      ],
+                    );
+                  },
                 );
               },
             ),
@@ -231,7 +242,6 @@ class ProfilePage extends StatelessWidget {
 
                   ListTile(
                     onTap: () {
-                      // Navigate to My Reviews
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -259,7 +269,6 @@ class ProfilePage extends StatelessWidget {
 
                   ListTile(
                     onTap: () async {
-                      // Sign out
                       await FirebaseAuth.instance.signOut();
                       Navigator.pushAndRemoveUntil(
                         context,

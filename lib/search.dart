@@ -18,12 +18,12 @@ class _SearchPageState extends State<SearchPage> {
   final List<String> filterCategories = [
     'All',
     'Asian',
-    'Italian',
     'Casual',
-    'Japanese',
     'Chicken',
-    'Drinks',
     'Grill',
+    'Italian',
+    'Japanese',
+    'Drinks',
   ];
 
   @override
