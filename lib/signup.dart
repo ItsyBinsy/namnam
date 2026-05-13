@@ -101,18 +101,10 @@ class _SignupPageState extends State<SignupPage> {
             SizedBox(height: 40),
 
             Center(
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Color(0xFFE8950A),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Icon(
-                  Icons.rice_bowl_rounded,
-                  color: Colors.white,
-                  size: 40,
-                ),
+              child: Image(
+                image: AssetImage('lib/images/namnam logo.png'),
+                width: 120,
+                height: 90,
               ),
             ),
 

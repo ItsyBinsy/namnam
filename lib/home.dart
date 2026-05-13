@@ -88,15 +88,9 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Container(
                     width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8950A),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.rice_bowl_rounded,
-                      color: Colors.white,
-                      size: 18,
+                    height: 25,
+                    child: Image(
+                      image: AssetImage('lib/images/namnam logo.png'),
                     ),
                   ),
                   const SizedBox(width: 8),
