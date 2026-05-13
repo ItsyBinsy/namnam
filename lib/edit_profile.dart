@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class EditProfilePage extends StatefulWidget {
   final String uid;
@@ -18,11 +21,25 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   final nameController = TextEditingController();
+  File? selectedImage;
+  String? currentPhotoUrl;
 
   @override
   void initState() {
     super.initState();
     nameController.text = widget.currentName;
+
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.uid)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        setState(() {
+          currentPhotoUrl = (doc.data() as Map<String, dynamic>?)?['photo_url'];
+        });
+      }
+    });
   }
 
   @override
@@ -48,7 +65,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
           const SizedBox(height: 12),
 
-          // users avatar
           Center(
             child: Container(
               width: 80,
@@ -57,11 +73,46 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 color: Color(0xFFE8950A),
                 shape: BoxShape.circle,
               ),
-              child: const Center(
-                child: Icon(
-                  Icons.person_rounded,
-                  color: Colors.white,
-                  size: 40,
+              child: selectedImage != null
+                  ? ClipOval(
+                child: Image.file(
+                  selectedImage!,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                ),
+              )
+                  : currentPhotoUrl != null && currentPhotoUrl!.isNotEmpty
+                  ? ClipOval(
+                child: Image.network(
+                  currentPhotoUrl!,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Center(
+                    child: Text(
+                      widget.currentName.isNotEmpty
+                          ? widget.currentName[0].toUpperCase()
+                          : 'U',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+                  : Center(
+                child: Text(
+                  widget.currentName.isNotEmpty
+                      ? widget.currentName[0].toUpperCase()
+                      : 'U',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -69,13 +120,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
           const SizedBox(height: 8),
 
-          // change photo btn
           Center(
             child: TextButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Change photo is coming soon!')),
-                );
+              onPressed: () async {
+                // Pick image from gallery
+                final pickedImage = await ImagePicker()
+                    .pickImage(source: ImageSource.gallery);
+                if (pickedImage != null) {
+                  setState(() {
+                    selectedImage = File(pickedImage.path);
+                  });
+                }
               },
               child: const Text(
                 'Change photo',
@@ -89,7 +144,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
           const SizedBox(height: 24),
 
-          // name
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -112,7 +166,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
           const SizedBox(height: 32),
 
-          // save
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -125,7 +178,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
               ),
               onPressed: () async {
-                var newName = nameController.text;
+                var newName = nameController.text.trim();
 
                 if (newName.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -134,19 +187,40 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   return;
                 }
 
-                await FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(widget.uid)
-                    .update({'fullname': newName});
+                try {
+                  String? uploadedPhotoUrl;
 
-                await FirebaseAuth.instance.currentUser
-                    ?.updateDisplayName(newName);
+                  if (selectedImage != null) {
+                    String fileName = widget.uid;
+                    Reference storageRef = FirebaseStorage.instance
+                        .ref()
+                        .child('profile_images')
+                        .child('$fileName.jpg');
+                    await storageRef.putFile(selectedImage!);
+                    uploadedPhotoUrl = await storageRef.getDownloadURL();
+                  }
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile updated!')),
-                );
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(widget.uid)
+                      .update({
+                    'fullname': newName,
+                    if (uploadedPhotoUrl != null) 'photo_url': uploadedPhotoUrl,
+                  });
 
-                Navigator.pop(context);
+                  await FirebaseAuth.instance.currentUser
+                      ?.updateDisplayName(newName);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Profile updated!')),
+                  );
+
+                  Navigator.pop(context);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
               },
               child: const Text(
                 'Save Changes',

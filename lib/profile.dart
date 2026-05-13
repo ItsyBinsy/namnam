@@ -22,6 +22,7 @@ class ProfilePage extends StatelessWidget {
 
         String displayName = 'User';
         String memberSince = '';
+        String photoUrl = '';
 
         if (snapshot.hasData && snapshot.data!.exists) {
           var data = snapshot.data!.data() as Map<String, dynamic>;
@@ -31,6 +32,7 @@ class ProfilePage extends StatelessWidget {
           } else {
             displayName = FirebaseAuth.instance.currentUser?.displayName ?? 'User';
           }
+          photoUrl = data['photo_url'] as String? ?? '';
 
           var createdAt = data['created_at'];
           if (createdAt is Timestamp) {
@@ -48,7 +50,6 @@ class ProfilePage extends StatelessWidget {
           shrinkWrap: true,
           children: [
 
-            // avatar and info
             Row(
               children: [
                 Container(
@@ -58,7 +59,26 @@ class ProfilePage extends StatelessWidget {
                     color: Color(0xFFE8950A),
                     shape: BoxShape.circle,
                   ),
-                  child: Center(
+                  child: photoUrl.isNotEmpty
+                      ? ClipOval(
+                    child: Image.network(
+                      photoUrl,
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Center(
+                        child: Text(
+                          displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                      : Center(
                     child: Text(
                       displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
                       style: const TextStyle(
@@ -108,7 +128,6 @@ class ProfilePage extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // stats row
             StreamBuilder<DocumentSnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('saved')
@@ -232,7 +251,6 @@ class ProfilePage extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // rows
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -324,6 +342,7 @@ class ProfilePage extends StatelessWidget {
 
                   ListTile(
                     onTap: () async {
+                      // Sign out
                       await FirebaseAuth.instance.signOut();
                       Navigator.pushAndRemoveUntil(
                         context,
