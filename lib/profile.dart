@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login.dart';
 import 'my_reviews.dart';
@@ -344,6 +345,11 @@ class ProfilePage extends StatelessWidget {
                     onTap: () async {
                       // Sign out
                       await FirebaseAuth.instance.signOut();
+                      try {
+                        await GoogleSignIn().disconnect();
+                      } catch (_) {
+                        await GoogleSignIn().signOut();
+                      }
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (context) => const LoginPage()),

@@ -162,45 +162,27 @@ class _SearchPageState extends State<SearchPage> {
                     'Min rating: ',
                     style: TextStyle(fontSize: 13, color: Color(0xFF6E6E73)),
                   ),
-                  Row(
-                    children: List.generate(5, (index) {
-                      var star = index + 1;
-                      return IconButton(
-                        onPressed: () {
-                          setState(() {
-                            minRating = minRating == star ? 0 : star;
-                          });
-                        },
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: Icon(
-                          index < minRating ? Icons.star_rounded : Icons.star_outline_rounded,
-                          color: const Color(0xFFE8950A),
-                          size: 24,
-                        ),
-                      );
-                    }),
-                  ),
-                  if (minRating > 0)
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          minRating = 0;
-                        });
-                      },
-                      style: TextButton.styleFrom(
-                        minimumSize: Size.zero,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: const Text(
-                        'Clear',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFAEAEB2),
-                        ),
-                      ),
+                  Expanded(
+                    child: Row(
+                      children: List.generate(5, (index) {
+                        var star = index + 1;
+                        return IconButton(
+                          onPressed: () {
+                            setState(() {
+                              minRating = minRating == star ? 0 : star;
+                            });
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: Icon(
+                            index < minRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                            color: const Color(0xFFE8950A),
+                            size: 24,
+                          ),
+                        );
+                      }),
                     ),
+                  ),
                 ],
               ),
             ],

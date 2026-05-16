@@ -137,88 +137,138 @@ class MyReviewsPage extends StatelessWidget {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(14),
-                            onTap: () {
-                              // Navigate to restaurant detail
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => RestaurantDetailPage(
-                                    restaurantId: restaurantId,
-                                  ),
-                                ),
-                              );
-                            },
-                            title: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          child: Stack(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(
-                                      child: Text(
-                                        restaurantName,
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            restaurantName,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF1D1D1F),
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                          date,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFFAEAEB2),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (restaurantCategory.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        restaurantCategory,
                                         style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF1D1D1F),
+                                          fontSize: 12,
+                                          color: Color(0xFF6E6E73),
+                                        ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: List.generate(
+                                        5,
+                                            (i) => Icon(
+                                          i < reviewRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                                          size: 16,
+                                          color: const Color(0xFFE8950A),
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(height: 6),
                                     Text(
-                                      date,
+                                      content,
                                       style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFFAEAEB2),
+                                        fontSize: 14,
+                                        color: Color(0xFF4A4A4F),
                                       ),
                                     ),
+                                    if (photoUrl != null && photoUrl.isNotEmpty) ...[
+                                      const SizedBox(height: 10),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network(
+                                          photoUrl,
+                                          width: double.infinity,
+                                          height: 120,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
-                                if (restaurantCategory.isNotEmpty) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    restaurantCategory,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF6E6E73),
-                                    ),
-                                  ),
-                                ],
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: List.generate(
-                                    5,
-                                        (i) => Icon(
-                                      i < reviewRating ? Icons.star_rounded : Icons.star_outline_rounded,
-                                      size: 16,
-                                      color: const Color(0xFFE8950A),
-                                    ),
-                                  ),
+                              ),
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Color(0xFFFF3B30), size: 20),
+                                  onPressed: () async {
+                                    bool? confirm = await showDialog(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text('Delete Review'),
+                                        content: const Text('Are you sure you want to delete this review?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx, false),
+                                            child: const Text('Cancel', style: TextStyle(color: Color(0xFF6E6E73))),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx, true),
+                                            child: const Text('Delete', style: TextStyle(color: Color(0xFFFF3B30))),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirm == true) {
+                                      await FirebaseFirestore.instance.collection('reviews').doc(reviews[index].id).delete();
+
+                                      // Optional: recount total average for restaurant
+                                      var allRestReviews = await FirebaseFirestore.instance
+                                          .collection('reviews')
+                                          .where('restaurant_id', isEqualTo: restaurantId)
+                                          .get();
+                                      var docs = allRestReviews.docs;
+                                      var count = docs.length;
+                                      var total = 0.0;
+                                      for (var d in docs) {
+                                        total += ((d.data()['rating'] ?? 0) as num).toDouble();
+                                      }
+                                      var newAvg = count > 0 ? total / count : 0.0;
+
+                                      await FirebaseFirestore.instance
+                                          .collection('tbl_restaurants')
+                                          .doc(restaurantId)
+                                          .update({
+                                        'reviews_count': count,
+                                        'rating': double.parse(newAvg.toStringAsFixed(1)),
+                                      });
+
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Review deleted')),
+                                        );
+                                      }
+                                    }
+                                  },
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  content,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFF4A4A4F),
-                                  ),
-                                ),
-                                if (photoUrl != null && photoUrl.isNotEmpty) ...[
-                                  const SizedBox(height: 10),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.network(
-                                      photoUrl,
-                                      width: double.infinity,
-                                      height: 120,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         );
                       },

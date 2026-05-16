@@ -311,14 +311,14 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                                               .snapshots(),
                                           builder: (context, userSnap) {
                                             String reviewerName = 'Anonymous';
+                                            String? userPhotoUrl;
 
                                             if (r['user_id'] == 'Anonymous') {
                                               reviewerName = 'Anonymous';
                                             } else if (userSnap.hasData && userSnap.data!.exists) {
                                               var userData = userSnap.data!.data();
-                                              reviewerName = userData?['fullname']
-                                                  ?? r['user_id']
-                                                  ?? 'Anonymous';
+                                              reviewerName = userData?['fullname'] ?? r['user_id'] ?? 'Anonymous';
+                                              userPhotoUrl = userData?['photo_url'] as String?;
                                             }
 
                                             var parts = reviewerName.trim().split(' ');
@@ -345,7 +345,15 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                                                           CircleAvatar(
                                                             radius: 16,
                                                             backgroundColor: Color(0xFFE8950A),
-                                                            child: Text(avatarText, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                                                            backgroundImage: userPhotoUrl != null && userPhotoUrl.isNotEmpty
+                                                                ? NetworkImage(userPhotoUrl)
+                                                                : null,
+                                                            child: userPhotoUrl != null && userPhotoUrl.isNotEmpty
+                                                                ? null
+                                                                : Text(
+                                                                    avatarText,
+                                                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)
+                                                                  ),
                                                           ),
                                                           SizedBox(width: 8),
                                                           Expanded(
